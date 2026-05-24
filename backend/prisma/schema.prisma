@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  avatarUrl    String?  @map("avatar_url")
+  role         String   @default("member")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  ownedTeams      Team[]          @relation("TeamOwner")
+  teamMemberships TeamMember[]
+  projectMembers  ProjectMember[]
+  assignedTasks   Task[]          @relation("TaskAssignee")
+  createdTasks    Task[]          @relation("TaskCreator")
+  comments        Comment[]
+  attachments     Attachment[]
+  notifications   Notification[]
+  activityLogs    ActivityLog[]
+
+  @@map("users")
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String   @map("owner_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  owner    User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members  TeamMember[]
+  projects Project[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String   @id @default(uuid())
+  teamId   String   @map("team_id")
+  userId   String   @map("user_id")
+  role     String   @default("member")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  teamId      String   @map("team_id")
+  createdById String   @map("created_by")
+  name        String
+  description String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  team         Team            @relation(fields: [teamId], references: [id])
+  members      ProjectMember[]
+  sprints      Sprint[]
+  tasks        Task[]
+  activityLogs ActivityLog[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  role      String   @default("member")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model Sprint {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  name      String
+  status    String   @default("planned")
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@map("sprints")
+}
+
+model Task {
+  id           String    @id @default(uuid())
+  projectId    String    @map("project_id")
+  sprintId     String?   @map("sprint_id")
+  assigneeId   String?   @map("assignee_id")
+  createdById  String    @map("created_by")
+  parentTaskId String?   @map("parent_task_id")
+  title        String
+  description  String?
+  status       String    @default("todo")
+  priority     String    @default("medium")
+  storyPoints  Int?      @map("story_points")
+  dueDate      DateTime? @map("due_date")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint     Sprint?     @relation(fields: [sprintId], references: [id])
+  assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdBy  User        @relation("TaskCreator", fields: [createdById], references: [id])
+  parentTask Task?       @relation("Subtasks", fields: [parentTaskId], references: [id])
+  subtasks   Task[]      @relation("Subtasks")
+  comments   Comment[]
+  attachments Attachment[]
+
+  @@map("tasks")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  authorId  String   @map("author_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@map("comments")
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  taskId     String   @map("task_id")
+  uploadedBy String   @map("uploaded_by")
+  fileName   String   @map("file_name")
+  fileUrl    String   @map("file_url")
+  fileType   String   @map("file_type")
+  fileSize   Int      @map("file_size")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  task     Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader User @relation(fields: [uploadedBy], references: [id])
+
+  @@map("attachments")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  type        String
+  message     String
+  isRead      Boolean  @default(false) @map("is_read")
+  referenceId String?  @map("reference_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  projectId   String?  @map("project_id")
+  entityType  String   @map("entity_type")
+  action      String
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@map("activity_logs")
+}
