@@ -40,7 +40,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+const projectRoutes = require('./src/routes/project.routes');
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
 
 // --- 404 handler ---
 app.use((req, res) => {
