@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const authRoutes = require('./src/routes/auth.routes');
 
 const app = express();
 
@@ -39,21 +40,37 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// --- API routes (we'll add these in Phase 5) ---
-// app.use('/api/auth', authRoutes);
-// app.use('/api/projects', projectRoutes);
-// app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', authRoutes);
 
 // --- 404 handler ---
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// --- Global error handler (must have 4 params) ---
+// Global error handler — 4 parameters is what tells Express this is an error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.statusCode || 500).json({
-    error: err.message || 'Internal server error',
+  // Handle Zod validation errors
+  // WHY: Zod throws a ZodError with an 'issues' array describing every failed rule
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: err.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      })),
+    });
+  }
+
+  // Use the statusCode we attached to the error, or fall back to 500
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal server error';
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    // WHY only in development: never expose stack traces in production
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
