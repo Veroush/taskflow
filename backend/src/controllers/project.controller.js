@@ -1,9 +1,4 @@
 const {
-  createProjectSchema,
-  updateProjectSchema,
-} = require('../validators/project.validator');
-
-const {
   createProjectService,
   getUserProjects,
   getProjectById,
@@ -11,14 +6,19 @@ const {
   deleteProjectService,
 } = require('../services/project.service');
 
+const {
+  createProjectSchema,
+  updateProjectSchema,
+} = require('../validators/project.validator');
+
 async function createProject(req, res, next) {
   try {
-    const data = createProjectSchema.parse(req.body);
+    const validated = createProjectSchema.parse(req.body);
     const project = await createProjectService({
-      ...data,
-      createdById: req.user.id, // comes from JWT via protect middleware
+      ...validated,
+      createdById: req.user.id,
     });
-    res.status(201).json({ project });
+    res.status(201).json({ success: true, data: project });
   } catch (err) {
     next(err);
   }
@@ -27,7 +27,7 @@ async function createProject(req, res, next) {
 async function getProjects(req, res, next) {
   try {
     const projects = await getUserProjects(req.user.id);
-    res.status(200).json({ projects });
+    res.status(200).json({ success: true, data: projects });
   } catch (err) {
     next(err);
   }
@@ -36,7 +36,7 @@ async function getProjects(req, res, next) {
 async function getProject(req, res, next) {
   try {
     const project = await getProjectById(req.params.id, req.user.id);
-    res.status(200).json({ project });
+    res.status(200).json({ success: true, data: project });
   } catch (err) {
     next(err);
   }
@@ -44,9 +44,9 @@ async function getProject(req, res, next) {
 
 async function updateProject(req, res, next) {
   try {
-    const data = updateProjectSchema.parse(req.body);
-    const project = await updateProjectService(req.params.id, req.user.id, data);
-    res.status(200).json({ project });
+    const validated = updateProjectSchema.parse(req.body);
+    const project = await updateProjectService(req.params.id, req.user.id, validated);
+    res.status(200).json({ success: true, data: project });
   } catch (err) {
     next(err);
   }
@@ -55,10 +55,16 @@ async function updateProject(req, res, next) {
 async function deleteProject(req, res, next) {
   try {
     const result = await deleteProjectService(req.params.id, req.user.id);
-    res.status(200).json(result);
+    res.status(200).json({ success: true, ...result });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { createProject, getProjects, getProject, updateProject, deleteProject };
+module.exports = {
+  createProject,
+  getProjects,
+  getProject,
+  updateProject,
+  deleteProject,
+};
