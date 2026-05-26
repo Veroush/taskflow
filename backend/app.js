@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const authRoutes = require('./src/routes/auth.routes');
+const teamRoutes = require('./src/routes/team.routes');
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.get('/health', (req, res) => {
 
 const projectRoutes = require('./src/routes/project.routes');
 app.use('/api/auth', authRoutes);
+app.use('/api/teams', teamRoutes);
 app.use('/api/projects', projectRoutes);
 
 // --- 404 handler ---
