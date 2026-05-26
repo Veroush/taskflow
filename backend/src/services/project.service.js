@@ -1,101 +1,93 @@
 const {
   createProject,
-  findProjectsByUserId,
+  findProjectsByTeamId,
   findProjectById,
   findProjectMember,
   updateProject,
   deleteProject,
 } = require('../repositories/project.repository');
 
-/**
- * Create a new project.
- * The service trusts that the validator already cleaned the input.
- * The service trusts that protect middleware already set req.user.
- */
-async function createProjectService({ name, description, teamId, createdById }) {
-  const project = await createProject({ name, description, teamId, createdById });
-  return project;
-}
+const { findTeamMember } = require('../repositories/team.repository');
 
-/**
- * Get all projects the user belongs to.
- */
-async function getUserProjects(userId) {
-  return findProjectsByUserId(userId);
-}
-
-/**
- * Get a single project — but only if the requesting user is a member.
- * This is an AUTHORIZATION check: "are you allowed to see this?"
- */
-async function getProjectById(projectId, userId) {
-  const project = await findProjectById(projectId);
-
-  if (!project) {
-    const err = new Error('Project not found');
-    err.statusCode = 404;
-    throw err;
+const createProjectService = async (data) => {
+  const teamMember = await findTeamMember(data.teamId, data.createdById);
+  if (!teamMember) {
+    const error = new Error('You are not a member of this team');
+    error.statusCode = 403;
+    throw error;
   }
 
-  // Check membership — non-members cannot view the project
-  const membership = await findProjectMember(projectId, userId);
-  if (!membership) {
-    const err = new Error('You do not have access to this project');
-    err.statusCode = 403;
-    throw err;
+  return createProject(data);
+};
+
+const getProjectsByTeam = async (teamId, userId) => {
+  const teamMember = await findTeamMember(teamId, userId);
+  if (!teamMember) {
+    const error = new Error('You are not a member of this team');
+    error.statusCode = 403;
+    throw error;
   }
 
-  return project;
-}
+  return findProjectsByTeamId(teamId);
+};
 
-/**
- * Update a project — only admins of the project can do this.
- */
-async function updateProjectService(projectId, userId, data) {
-  // First confirm the project exists
+const getProjectById = async (projectId, userId) => {
   const project = await findProjectById(projectId);
   if (!project) {
-    const err = new Error('Project not found');
-    err.statusCode = 404;
-    throw err;
+    const error = new Error('Project not found');
+    error.statusCode = 404;
+    throw error;
   }
 
-  // Then confirm the user is an admin
-  const membership = await findProjectMember(projectId, userId);
-  if (!membership || membership.role !== 'admin') {
-    const err = new Error('Only project admins can update this project');
-    err.statusCode = 403;
-    throw err;
+  const projectMember = await findProjectMember(projectId, userId);
+  if (!projectMember) {
+    const error = new Error('You are not a member of this project');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return project;
+};
+
+const updateProjectService = async (projectId, userId, data) => {
+  const project = await findProjectById(projectId);
+  if (!project) {
+    const error = new Error('Project not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const projectMember = await findProjectMember(projectId, userId);
+  if (!projectMember || projectMember.role !== 'admin') {
+    const error = new Error('Only project admins can update this project');
+    error.statusCode = 403;
+    throw error;
   }
 
   return updateProject(projectId, data);
-}
+};
 
-/**
- * Delete a project — only the creator (admin) can do this.
- */
-async function deleteProjectService(projectId, userId) {
+const deleteProjectService = async (projectId, userId) => {
   const project = await findProjectById(projectId);
   if (!project) {
-    const err = new Error('Project not found');
-    err.statusCode = 404;
-    throw err;
+    const error = new Error('Project not found');
+    error.statusCode = 404;
+    throw error;
   }
 
-  const membership = await findProjectMember(projectId, userId);
-  if (!membership || membership.role !== 'admin') {
-    const err = new Error('Only project admins can delete this project');
-    err.statusCode = 403;
-    throw err;
+  const projectMember = await findProjectMember(projectId, userId);
+  if (!projectMember || projectMember.role !== 'admin') {
+    const error = new Error('Only project admins can delete this project');
+    error.statusCode = 403;
+    throw error;
   }
 
-  await deleteProject(projectId);
-  return { message: 'Project deleted successfully' };
-}
+  return deleteProject(projectId);
+};
 
 module.exports = {
   createProjectService,
-  getUserProjects,
+  getProjectsByTeam,
   getProjectById,
   updateProjectService,
   deleteProjectService,
