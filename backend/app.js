@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const authRoutes = require('./src/routes/auth.routes');
 const teamRoutes = require('./src/routes/team.routes');
+const { projectRouter: sprintProjectRouter, sprintRouter } = require('./src/routes/sprint.routes');
 
 const app = express();
 
@@ -45,6 +46,8 @@ const projectRoutes = require('./src/routes/project.routes');
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/projects/:projectId/sprints', sprintProjectRouter);
+app.use('/api/sprints', sprintRouter);
 
 // --- 404 handler ---
 app.use((req, res) => {
