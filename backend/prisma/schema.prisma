@@ -25,6 +25,7 @@ model User {
   attachments     Attachment[]
   notifications   Notification[]
   activityLogs    ActivityLog[]
+  createdProjects Project[]  @relation("ProjectCreator")
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
 
   team         Team            @relation(fields: [teamId], references: [id])
+  createdBy    User            @relation("ProjectCreator", fields: [createdById], references: [id])
   members      ProjectMember[]
   sprints      Sprint[]
   tasks        Task[]

@@ -1,6 +1,6 @@
 const {
   createProjectService,
-  getUserProjects,
+  getProjectsByTeam,
   getProjectById,
   updateProjectService,
   deleteProjectService,
@@ -26,7 +26,7 @@ async function createProject(req, res, next) {
 
 async function getProjects(req, res, next) {
   try {
-    const projects = await getUserProjects(req.user.id);
+    const projects = await getProjectsByTeam(req.query.teamId, req.user.id);
     res.status(200).json({ success: true, data: projects });
   } catch (err) {
     next(err);
