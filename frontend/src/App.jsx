@@ -1,12 +1,19 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import AppLayout from './components/AppLayout'
+import LoginPage from './pages/LoginPage'
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<div className="text-white bg-gray-900 min-h-screen p-8">Home</div>} />
-      <Route path="/login" element={<div className="text-white bg-gray-900 min-h-screen p-8">Login</div>} />
-      <Route path="/register" element={<div className="text-white bg-gray-900 min-h-screen p-8">Register</div>} />
-      <Route path="/dashboard" element={<div className="text-white bg-gray-900 min-h-screen p-8">Dashboard</div>} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/app" element={<AppLayout />}>
+        <Route path="dashboard" element={<div className="p-8">Dashboard coming soon</div>} />
+        <Route path="my-tasks" element={<div className="p-8">My Tasks coming soon</div>} />
+        <Route path="teams" element={<div className="p-8">Teams coming soon</div>} />
+        <Route path="projects" element={<div className="p-8">Projects coming soon</div>} />
+        <Route path="settings" element={<div className="p-8">Settings coming soon</div>} />
+      </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }
