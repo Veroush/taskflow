@@ -7,6 +7,7 @@ const authRoutes = require('./src/routes/auth.routes');
 const teamRoutes = require('./src/routes/team.routes');
 const { projectRouter: sprintProjectRouter, sprintRouter } = require('./src/routes/sprint.routes');
 const projectRoutes = require('./src/routes/project.routes');
+const { projectRouter: taskProjectRouter, taskRouter } = require('./src/routes/task.routes');
 
 const app = express();
 
@@ -48,6 +49,8 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/sprints', sprintProjectRouter);
 app.use('/api/sprints', sprintRouter);
+app.use('/api/projects/:projectId/tasks', taskProjectRouter);
+app.use('/api/tasks', taskRouter);
 
 // --- 404 handler ---
 app.use((req, res) => {
