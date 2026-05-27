@@ -52,8 +52,8 @@ export default function LoginPage() {
 
     try {
       const response = await api.post('/auth/login', { email, password })
-      localStorage.setItem('token', response.data.token)
-      localStorage.setItem('user', JSON.stringify(response.data.user))
+      localStorage.setItem('token', response.data.data.token)
+      localStorage.setItem('user', JSON.stringify(response.data.data.user))
       const from = location.state?.from?.pathname || '/app/dashboard'
       navigate(from, { replace: true })
     } catch (err) {
