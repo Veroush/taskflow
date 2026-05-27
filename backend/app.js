@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./src/routes/auth.routes');
 const teamRoutes = require('./src/routes/team.routes');
 const { projectRouter: sprintProjectRouter, sprintRouter } = require('./src/routes/sprint.routes');
+const projectRoutes = require('./src/routes/project.routes');
 
 const app = express();
 
@@ -42,7 +43,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-const projectRoutes = require('./src/routes/project.routes');
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/projects', projectRoutes);
