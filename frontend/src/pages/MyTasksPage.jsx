@@ -4,6 +4,7 @@ import { CheckCircle2, AlertCircle, Plus } from 'lucide-react'
 import api from '../services/api'
 import TopBar from '../components/TopBar'
 import TaskDetailPanel from '../components/TaskDetailPanel'
+import NewTaskModal from '../components/NewTaskModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -194,16 +195,7 @@ function KanbanColumn({ column, tasks, onTaskClick, onAddTask }) {
   )
 }
 
-// ─── NewTaskModal stub ────────────────────────────────────────────────────────
-// WHY a stub: the modal isn't built yet. Returning null means the "+ Add Task"
-// button exists and is wired up, but clicking it just opens/closes nothing visible.
-// Replace this entire function when building the modal in a future session.
-
-function NewTaskModal({ isOpen, onClose }) {
-  if (!isOpen) return null
-  // TODO: Build full NewTaskModal in future session
-  return null
-}
+// NewTaskModal is now a real shared component — imported at the top of this file.
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -408,7 +400,15 @@ export default function MyTasksPage() {
         </div>
 
         {/* Modal stub — will be built in a future session */}
-        <NewTaskModal isOpen={showNewTask} onClose={() => setShowNewTask(false)} />
+        {/* NOTE: MyTasksPage has no projectId — modal will show a "no project" error.
+            Creating tasks from My Tasks requires a project context. This will be
+            improved in a future session when we add a project picker to the modal. */}
+        <NewTaskModal
+          isOpen={showNewTask}
+          onClose={() => setShowNewTask(false)}
+          onTaskCreated={(task) => setTasks((prev) => [task, ...prev])}
+          projectId={null}
+        />
       </div>
     )
   }
@@ -441,8 +441,13 @@ export default function MyTasksPage() {
         task={selectedTask}
       />
 
-      {/* New Task modal stub */}
-      <NewTaskModal isOpen={showNewTask} onClose={() => setShowNewTask(false)} />
+      {/* New Task modal */}
+      <NewTaskModal
+        isOpen={showNewTask}
+        onClose={() => setShowNewTask(false)}
+        onTaskCreated={(task) => setTasks((prev) => [task, ...prev])}
+        projectId={null}
+      />
     </div>
   )
 }

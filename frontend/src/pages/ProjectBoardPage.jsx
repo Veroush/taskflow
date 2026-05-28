@@ -4,6 +4,7 @@ import { Plus, AlertCircle, ChevronRight } from 'lucide-react'
 import api from '../services/api'
 import TopBar from '../components/TopBar'
 import TaskDetailPanel from '../components/TaskDetailPanel'
+import NewTaskModal from '../components/NewTaskModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -66,15 +67,7 @@ const formatDate = (isoString) => {
   })
 }
 
-// ─── NewTaskModal stub ────────────────────────────────────────────────────────
-// WHY a stub: the full modal isn't built yet. The "+ Add Task" button is wired
-// and ready. Replace this function when building the modal in a future session.
-
-function NewTaskModal({ isOpen, onClose }) {
-  if (!isOpen) return null
-  // TODO: Build full NewTaskModal in future session
-  return null
-}
+// NewTaskModal is now a real shared component — imported at the top of this file.
 
 // ─── KanbanCard ───────────────────────────────────────────────────────────────
 // WHY a sub-component: isolates card markup so the column render loop stays clean.
@@ -546,8 +539,13 @@ export default function ProjectBoardPage() {
         task={selectedTask}
       />
 
-      {/* ── New Task modal stub ───────────────────────────────────────────────── */}
-      <NewTaskModal isOpen={showNewTask} onClose={() => setShowNewTask(false)} />
+      {/* ── New Task modal ────────────────────────────────────────────────── */}
+      <NewTaskModal
+        isOpen={showNewTask}
+        onClose={() => setShowNewTask(false)}
+        onTaskCreated={(task) => setTasks((prev) => [task, ...prev])}
+        projectId={projectId}
+      />
     </div>
   )
 }
