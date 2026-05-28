@@ -3,6 +3,7 @@ import AppLayout from './components/AppLayout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import MyTasksPage from './pages/MyTasksPage'
 
 function App() {
   return (
@@ -11,7 +12,7 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/app" element={<AppLayout />}>
         <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="my-tasks" element={<div className="p-8">My Tasks coming soon</div>} />
+        <Route path="my-tasks" element={<MyTasksPage />} />
         <Route path="teams" element={<div className="p-8">Teams coming soon</div>} />
         <Route path="projects" element={<div className="p-8">Projects coming soon</div>} />
         <Route path="settings" element={<div className="p-8">Settings coming soon</div>} />
