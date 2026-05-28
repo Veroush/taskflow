@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage'
 import MyTasksPage from './pages/MyTasksPage'
 import TeamsListPage from './pages/TeamsListPage'
 import TeamDetailPage from './pages/TeamDetailPage'
+import ProjectBoardPage from './pages/ProjectBoardPage'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="my-tasks" element={<MyTasksPage />} />
         <Route path="teams" element={<TeamsListPage />} />
         <Route path="teams/:teamId" element={<TeamDetailPage />} />
+        <Route path="teams/:teamId/projects/:projectId/board" element={<ProjectBoardPage />} />
         <Route path="projects" element={<div className="p-8">Projects coming soon</div>} />
         <Route path="settings" element={<div className="p-8">Settings coming soon</div>} />
       </Route>
