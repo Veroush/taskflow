@@ -9,6 +9,7 @@ import TeamDetailPage from './pages/TeamDetailPage'
 import ProjectBoardPage from './pages/ProjectBoardPage'
 import BacklogPage from './pages/BacklogPage'
 import SprintsPage from './pages/SprintsPage'
+import ProjectsPage from './pages/ProjectsPage'
 import ProjectMembersPage from './pages/ProjectMembersPage'
 import SettingsPage from './pages/SettingsPage'
 
@@ -27,7 +28,7 @@ function App() {
         <Route path="teams/:teamId/projects/:projectId/backlog" element={<BacklogPage />} />
         <Route path="teams/:teamId/projects/:projectId/sprints" element={<SprintsPage />} />
         <Route path="teams/:teamId/projects/:projectId/members" element={<ProjectMembersPage />} />
-        <Route path="projects" element={<div className="p-8">Projects coming soon</div>} />
+        <Route path="projects" element={<ProjectsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
