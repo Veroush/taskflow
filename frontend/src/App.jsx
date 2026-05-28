@@ -9,6 +9,7 @@ import TeamDetailPage from './pages/TeamDetailPage'
 import ProjectBoardPage from './pages/ProjectBoardPage'
 import BacklogPage from './pages/BacklogPage'
 import SprintsPage from './pages/SprintsPage'
+import ProjectMembersPage from './pages/ProjectMembersPage'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="teams/:teamId/projects/:projectId/board" element={<ProjectBoardPage />} />
         <Route path="teams/:teamId/projects/:projectId/backlog" element={<BacklogPage />} />
         <Route path="teams/:teamId/projects/:projectId/sprints" element={<SprintsPage />} />
+        <Route path="teams/:teamId/projects/:projectId/members" element={<ProjectMembersPage />} />
         <Route path="projects" element={<div className="p-8">Projects coming soon</div>} />
         <Route path="settings" element={<div className="p-8">Settings coming soon</div>} />
       </Route>
