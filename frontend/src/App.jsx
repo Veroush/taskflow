@@ -7,10 +7,12 @@ import MyTasksPage from './pages/MyTasksPage'
 import TeamsListPage from './pages/TeamsListPage'
 import TeamDetailPage from './pages/TeamDetailPage'
 import ProjectBoardPage from './pages/ProjectBoardPage'
+import BacklogPage from './pages/BacklogPage'
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/app" element={<AppLayout />}>
@@ -19,6 +21,7 @@ function App() {
         <Route path="teams" element={<TeamsListPage />} />
         <Route path="teams/:teamId" element={<TeamDetailPage />} />
         <Route path="teams/:teamId/projects/:projectId/board" element={<ProjectBoardPage />} />
+        <Route path="teams/:teamId/projects/:projectId/backlog" element={<BacklogPage />} />
         <Route path="projects" element={<div className="p-8">Projects coming soon</div>} />
         <Route path="settings" element={<div className="p-8">Settings coming soon</div>} />
       </Route>
