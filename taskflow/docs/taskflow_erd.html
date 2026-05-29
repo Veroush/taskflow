@@ -1,0 +1,164 @@
+
+<style>
+#erd svg { width: 100%; }
+#erd svg .node rect, #erd svg .node path { rx: 8; }
+</style>
+<div id="erd" style="padding: 1rem 0; min-height: 400px;"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+  },
+});
+const { svg } = await mermaid.render('erd-svg', `erDiagram
+  users {
+    uuid id PK
+    string email
+    string password_hash
+    string full_name
+    string avatar_url
+    string role
+    timestamp created_at
+  }
+  teams {
+    uuid id PK
+    string name
+    string description
+    uuid owner_id FK
+    timestamp created_at
+  }
+  team_members {
+    uuid id PK
+    uuid team_id FK
+    uuid user_id FK
+    string role
+    timestamp joined_at
+  }
+  projects {
+    uuid id PK
+    uuid team_id FK
+    uuid created_by FK
+    string name
+    string description
+    string status
+    timestamp created_at
+  }
+  project_members {
+    uuid id PK
+    uuid project_id FK
+    uuid user_id FK
+    string role
+    timestamp joined_at
+  }
+  sprints {
+    uuid id PK
+    uuid project_id FK
+    string name
+    string status
+    date start_date
+    date end_date
+    timestamp created_at
+  }
+  tasks {
+    uuid id PK
+    uuid project_id FK
+    uuid sprint_id FK
+    uuid assignee_id FK
+    uuid created_by FK
+    uuid parent_task_id FK
+    string title
+    string description
+    string status
+    string priority
+    int story_points
+    timestamp due_date
+    timestamp created_at
+  }
+  comments {
+    uuid id PK
+    uuid task_id FK
+    uuid author_id FK
+    string content
+    timestamp created_at
+    timestamp updated_at
+  }
+  attachments {
+    uuid id PK
+    uuid task_id FK
+    uuid uploaded_by FK
+    string file_name
+    string file_url
+    string file_type
+    int file_size
+    timestamp created_at
+  }
+  notifications {
+    uuid id PK
+    uuid user_id FK
+    string type
+    string message
+    boolean is_read
+    uuid reference_id
+    timestamp created_at
+  }
+  activity_logs {
+    uuid id PK
+    uuid user_id FK
+    uuid project_id FK
+    string entity_type
+    string action
+    string description
+    timestamp created_at
+  }
+
+  users ||--o{ teams : "owns"
+  users ||--o{ team_members : "belongs to"
+  teams ||--o{ team_members : "has"
+  teams ||--o{ projects : "owns"
+  users ||--o{ project_members : "member of"
+  projects ||--o{ project_members : "has"
+  projects ||--o{ sprints : "has"
+  projects ||--o{ tasks : "contains"
+  sprints ||--o{ tasks : "groups"
+  users ||--o{ tasks : "assigned to"
+  tasks ||--o{ tasks : "subtask of"
+  tasks ||--o{ comments : "has"
+  tasks ||--o{ attachments : "has"
+  users ||--o{ comments : "writes"
+  users ||--o{ attachments : "uploads"
+  users ||--o{ notifications : "receives"
+  users ||--o{ activity_logs : "generates"
+  projects ||--o{ activity_logs : "tracks"
+`);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+</script>

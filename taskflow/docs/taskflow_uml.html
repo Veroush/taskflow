@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — UML Class Diagram</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+    p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    #uml svg { width: 100%; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e0e0e0; }
+      p { color: #999; }
+    }
+  </style>
+</head>
+<body>
+  <h1>TaskFlow — UML Class Diagram</h1>
+  <p>Class diagram showing all models, fields, methods, and relationships in the TaskFlow system.</p>
+  <div id="uml"></div>
+
+  <script type="module">
+    import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    await document.fonts.ready;
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      fontFamily: 'sans-serif',
+      themeVariables: {
+        darkMode: dark,
+        fontSize: '13px',
+        lineColor: dark ? '#9c9a92' : '#73726c',
+        textColor: dark ? '#c2c0b6' : '#3d3d3a',
+      },
+    });
+
+    const { svg } = await mermaid.render('uml-svg', `classDiagram
+      class User {
+        +UUID id
+        +String email
+        +String passwordHash
+        +String fullName
+        +String avatarUrl
+        +String role
+        +DateTime createdAt
+        +register()
+        +login()
+      }
+
+      class Team {
+        +UUID id
+        +String name
+        +String description
+        +UUID ownerId
+        +DateTime createdAt
+        +create()
+        +update()
+        +delete()
+      }
+
+      class TeamMember {
+        +UUID id
+        +UUID teamId
+        +UUID userId
+        +String role
+        +DateTime joinedAt
+      }
+
+      class Project {
+        +UUID id
+        +UUID teamId
+        +UUID createdById
+        +String name
+        +String description
+        +String status
+        +DateTime createdAt
+        +create()
+        +update()
+        +delete()
+      }
+
+      class ProjectMember {
+        +UUID id
+        +UUID projectId
+        +UUID userId
+        +String role
+        +DateTime joinedAt
+      }
+
+      class Sprint {
+        +UUID id
+        +UUID projectId
+        +String name
+        +String status
+        +Date startDate
+        +Date endDate
+        +DateTime createdAt
+        +create()
+        +update()
+        +delete()
+      }
+
+      class Task {
+        +UUID id
+        +UUID projectId
+        +UUID sprintId
+        +UUID assigneeId
+        +UUID createdById
+        +UUID parentTaskId
+        +String title
+        +String description
+        +String status
+        +String priority
+        +Int storyPoints
+        +DateTime dueDate
+        +create()
+        +update()
+        +delete()
+        +breakdown()
+      }
+
+      class Comment {
+        +UUID id
+        +UUID taskId
+        +UUID authorId
+        +String content
+        +DateTime createdAt
+        +DateTime updatedAt
+      }
+
+      class Notification {
+        +UUID id
+        +UUID userId
+        +String type
+        +String message
+        +Boolean isRead
+        +UUID referenceId
+        +DateTime createdAt
+      }
+
+      class ActivityLog {
+        +UUID id
+        +UUID userId
+        +UUID projectId
+        +String entityType
+        +String action
+        +String description
+        +DateTime createdAt
+      }
+
+      User "1" --> "0..*" Team : owns
+      User "1" --> "0..*" TeamMember : has
+      Team "1" --> "0..*" TeamMember : contains
+      Team "1" --> "0..*" Project : contains
+      User "1" --> "0..*" ProjectMember : has
+      Project "1" --> "0..*" ProjectMember : contains
+      Project "1" --> "0..*" Sprint : has
+      Project "1" --> "0..*" Task : contains
+      Sprint "1" --> "0..*" Task : groups
+      User "1" --> "0..*" Task : assignedTo
+      Task "1" --> "0..*" Task : subtaskOf
+      Task "1" --> "0..*" Comment : has
+      User "1" --> "0..*" Comment : writes
+      User "1" --> "0..*" Notification : receives
+      User "1" --> "0..*" ActivityLog : generates
+      Project "1" --> "0..*" ActivityLog : tracks
+    `);
+
+    document.getElementById('uml').innerHTML = svg;
+
+    document.querySelectorAll('#uml svg .node').forEach(node => {
+      const firstPath = node.querySelector('path[d]');
+      if (!firstPath) return;
+      const d = firstPath.getAttribute('d');
+      const nums = d.match(/-?[\d.]+/g)?.map(Number);
+      if (!nums || nums.length < 8) return;
+      const xs = [nums[0], nums[2], nums[4], nums[6]];
+      const ys = [nums[1], nums[3], nums[5], nums[7]];
+      const x = Math.min(...xs), y = Math.min(...ys);
+      const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x); rect.setAttribute('y', y);
+      rect.setAttribute('width', w); rect.setAttribute('height', h);
+      rect.setAttribute('rx', '8');
+      for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+        if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+      }
+      firstPath.replaceWith(rect);
+    });
+  </script>
+</body>
+</html>
