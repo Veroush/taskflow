@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Plus, AlertCircle, ChevronRight } from 'lucide-react'
 import api from '../services/api'
 import TopBar from '../components/TopBar'
 import TaskDetailPanel from '../components/TaskDetailPanel'
+import NewTaskModal from '../components/NewTaskModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -48,24 +49,54 @@ const getInitials = (name) => {
     .slice(0, 2)
 }
 
-// ─── NewTaskModal stub ────────────────────────────────────────────────────────
-// WHY a stub: the full modal isn't built yet. The "Create Task" button is wired
-// and ready. Replace this function when building the modal in a future session.
-
-function NewTaskModal({ isOpen, onClose }) {
-  if (!isOpen) return null
-  // TODO: Build full NewTaskModal in future session
-  return null
-}
-
 // ─── TaskRow ──────────────────────────────────────────────────────────────────
 // WHY a sub-component: isolates row markup so the table render loop stays clean.
+// Props:
+//   task          — the task object
+//   onTaskClick   — opens TaskDetailPanel
+//   isLast        — suppresses bottom border on the last row
+//   sprints       — list of available sprints for the dropdown
+//   onAddToSprint — called with (taskId, sprintId) when the user picks a sprint
 
-function TaskRow({ task, onTaskClick, isLast }) {
+function TaskRow({ task, onTaskClick, isLast, sprints, onAddToSprint }) {
   const priorityStyle = getPriorityStyle(task.priority)
   const assigneeName = task.assignee?.fullName ?? null
   const initials = assigneeName ? getInitials(assigneeName) : null
   const statusLabel = getStatusLabel(task.status)
+
+  // ── Sprint dropdown state ─────────────────────────────────────────────────
+  // WHY local to TaskRow: each row manages its own open/close state independently.
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [isAssigning, setIsAssigning] = useState(false)
+  const dropdownRef = useRef(null)
+
+  // Close dropdown when clicking outside this row's dropdown area.
+  // WHY: standard UX pattern for inline dropdowns — no modal/overlay needed.
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [dropdownOpen])
+
+  const handleSprintSelect = async (sprintId) => {
+    setDropdownOpen(false)
+    setIsAssigning(true)
+    try {
+      await onAddToSprint(task.id, sprintId)
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  // Only offer planned and active sprints — completed sprints can't receive new work.
+  const availableSprints = sprints.filter(
+    (s) => s.status === 'planned' || s.status === 'active'
+  )
 
   return (
     <div
@@ -131,31 +162,75 @@ function TaskRow({ task, onTaskClick, isLast }) {
         {task.storyPoints != null ? task.storyPoints : '—'}
       </div>
 
-      {/* Add to Sprint button */}
-      {/* NOTE: No handler yet — sprint assignment will be built in the Sprints page session */}
+      {/* Add to Sprint button + dropdown */}
       <div className="col-span-1 flex justify-end" role="cell">
-        <button
-          aria-label={`Add ${task.title} to sprint`}
-          className="px-3 py-1 rounded-md border transition-colors hover:text-white"
-          style={{
-            color: '#5e6ad2',
-            borderColor: '#5e6ad2',
-            fontSize: '12px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#5e6ad2'
-            e.currentTarget.style.color = 'white'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-            e.currentTarget.style.color = '#5e6ad2'
-          }}
-          onClick={() => {
-            // TODO: open sprint selection modal in future session
-          }}
-        >
-          + Sprint
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            aria-label={`Add ${task.title} to sprint`}
+            aria-expanded={dropdownOpen}
+            aria-haspopup="listbox"
+            disabled={isAssigning}
+            className="px-3 py-1 rounded-md border transition-colors hover:text-white"
+            style={{
+              color: isAssigning ? '#9ca3af' : '#5e6ad2',
+              borderColor: isAssigning ? '#9ca3af' : '#5e6ad2',
+              fontSize: '12px',
+              cursor: isAssigning ? 'not-allowed' : 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              if (!isAssigning) {
+                e.currentTarget.style.backgroundColor = '#5e6ad2'
+                e.currentTarget.style.color = 'white'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isAssigning) {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = '#5e6ad2'
+              }
+            }}
+            onClick={() => setDropdownOpen((prev) => !prev)}
+          >
+            {isAssigning ? '...' : '+ Sprint'}
+          </button>
+
+          {/* Sprint picker dropdown */}
+          {dropdownOpen && (
+            <div
+              className="absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10"
+              style={{ borderColor: '#e5e7eb', minWidth: '160px' }}
+              role="listbox"
+              aria-label="Select a sprint"
+            >
+              {availableSprints.length === 0 ? (
+                <p
+                  className="px-3 py-2"
+                  style={{ fontSize: '13px', color: '#9ca3af' }}
+                >
+                  No active sprints
+                </p>
+              ) : (
+                availableSprints.map((sprint) => (
+                  <button
+                    key={sprint.id}
+                    role="option"
+                    onClick={() => handleSprintSelect(sprint.id)}
+                    className="w-full text-left px-3 py-2 transition-colors hover:bg-gray-50"
+                    style={{ fontSize: '13px', color: '#111827' }}
+                  >
+                    <span>{sprint.name}</span>
+                    <span
+                      className="ml-2 capitalize"
+                      style={{ fontSize: '11px', color: '#9ca3af' }}
+                    >
+                      {sprint.status}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -171,6 +246,7 @@ export default function BacklogPage() {
   // ── State ────────────────────────────────────────────────────────────────────
   const [project, setProject] = useState(null)
   const [tasks, setTasks] = useState([])
+  const [sprints, setSprints] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null) // null | 'not_found' | 'failed'
   const [selectedTask, setSelectedTask] = useState(null)
@@ -186,9 +262,10 @@ export default function BacklogPage() {
       setError(null)
 
       try {
-        const [projectRes, tasksRes] = await Promise.all([
+        const [projectRes, tasksRes, sprintsRes] = await Promise.all([
           api.get(`/projects/${projectId}`),
           api.get(`/projects/${projectId}/tasks`),
+          api.get(`/projects/${projectId}/sprints`),
         ])
 
         // GET /api/projects/:id → { success: true, data: { ...projectObject } }
@@ -199,6 +276,10 @@ export default function BacklogPage() {
         const allTasks = tasksRes.data.data ?? []
         const backlogTasks = allTasks.filter((t) => t.sprintId === null)
         setTasks(backlogTasks)
+
+        // GET /api/projects/:projectId/sprints → { success: true, data: [...sprints] }
+        // WHY fetch here: the "+ Sprint" dropdown needs the sprint list to populate.
+        setSprints(sprintsRes.data.data ?? [])
       } catch (err) {
         if (err.response?.status === 401) {
           localStorage.removeItem('token')
@@ -221,6 +302,7 @@ export default function BacklogPage() {
   // Shapes raw task data into the format TaskDetailPanel expects.
   const handleTaskClick = (task) => {
     setSelectedTask({
+      id: task.id,
       title: task.title,
       description: task.description || 'No description provided.',
       status: getStatusLabel(task.status),
@@ -232,6 +314,16 @@ export default function BacklogPage() {
       dueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—',
       created: task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '—',
     })
+  }
+
+  // ── Add to sprint handler ─────────────────────────────────────────────────────
+  // Called when the user picks a sprint from the row dropdown.
+  // WHY remove from list immediately: the backlog only shows sprintId === null
+  // tasks. Once assigned, the task belongs in the sprint view, not here.
+  const handleAddToSprint = async (taskId, sprintId) => {
+    await api.patch(`/tasks/${taskId}`, { sprintId })
+    // Remove the task from the backlog list on success.
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
   }
 
   // ── Loading state ─────────────────────────────────────────────────────────────
@@ -460,6 +552,8 @@ export default function BacklogPage() {
                 task={task}
                 onTaskClick={handleTaskClick}
                 isLast={index === tasks.length - 1}
+                sprints={sprints}
+                onAddToSprint={handleAddToSprint}
               />
             ))
           )}
@@ -473,8 +567,15 @@ export default function BacklogPage() {
         task={selectedTask}
       />
 
-      {/* ── New Task modal stub ───────────────────────────────────────────────── */}
-      <NewTaskModal isOpen={showNewTask} onClose={() => setShowNewTask(false)} />
+      {/* ── New Task modal ────────────────────────────────────────────────────── */}
+      {/* WHY onTaskCreated appends: new tasks have no sprint, so they belong at
+          the end of the backlog list. */}
+      <NewTaskModal
+        isOpen={showNewTask}
+        onClose={() => setShowNewTask(false)}
+        projectId={projectId}
+        onTaskCreated={(newTask) => setTasks((prev) => [...prev, newTask])}
+      />
     </div>
   )
 }
