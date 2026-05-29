@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Plus, Edit2, AlertCircle, Users, FolderKanban } from 'lucide-react'
+import { Plus, Edit2, X, AlertCircle, Users, FolderKanban } from 'lucide-react'
 import api from '../services/api'
 import TopBar from '../components/TopBar'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -25,6 +25,220 @@ const getStatusStyle = (status) => {
 }
 
 // CreateProjectModal is a real shared component — imported at the top of this file.
+
+// ─── EditTeamModal ────────────────────────────────────────────────────────────
+// Inline modal — no new file needed, only used here.
+// Props:
+//   isOpen      {bool}   — controls visibility
+//   onClose     {func}   — called on cancel, Escape, backdrop click, post-submit
+//   team        {object} — current team object, used to pre-fill the form
+//   onTeamSaved {func}   — receives the updated team object on success
+
+function EditTeamModal({ isOpen, onClose, team, onTeamSaved }) {
+  const nameRef = useRef(null)
+  const [form, setForm] = useState({ name: '', description: '' })
+  const [errors, setErrors] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Pre-fill form with current team values every time the modal opens.
+  useEffect(() => {
+    if (isOpen && team) {
+      setForm({ name: team.name, description: team.description || '' })
+      setErrors({})
+      const t = setTimeout(() => nameRef.current?.focus(), 50)
+      return () => clearTimeout(t)
+    }
+  }, [isOpen, team])
+
+  // Close on Escape key.
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
+  const clearError = (key) => setErrors((prev) => ({ ...prev, [key]: '' }))
+
+  const validate = () => {
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Team name is required'
+    return errs
+  }
+
+  const isPrimaryDisabled = !form.name.trim() || isSubmitting
+
+  const handleSubmit = async () => {
+    const errs = validate()
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      if (errs.name) nameRef.current?.focus()
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      const body = { name: form.name.trim() }
+      // WHY omit description when empty: sending an empty string would overwrite
+      // an existing description with nothing. Omitting it leaves it unchanged.
+      if (form.description.trim()) body.description = form.description.trim()
+
+      // PATCH /api/teams/:id → { team: { ...updatedTeam } }
+      const response = await api.patch(`/teams/${team.id}`, body)
+      onTeamSaved(response.data.team)
+      onClose()
+    } catch (err) {
+      const serverMessage = err.response?.data?.error
+      setErrors({ submit: serverMessage || 'Failed to save changes. Please try again.' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg w-full overflow-hidden"
+        style={{ maxWidth: '480px' }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-team-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid #e5e7eb' }}
+        >
+          <h2
+            id="edit-team-modal-title"
+            className="font-semibold"
+            style={{ fontSize: '18px', color: '#111827' }}
+          >
+            Edit Team
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1 rounded transition-colors hover:bg-gray-100"
+          >
+            <X size={18} style={{ color: '#9ca3af' }} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-4">
+
+          {/* Submit-level error banner */}
+          {errors.submit && (
+            <div
+              className="p-3 rounded-md border flex items-center gap-2"
+              style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
+              role="alert"
+            >
+              <AlertCircle size={16} style={{ color: '#dc2626', flexShrink: 0 }} />
+              <p style={{ fontSize: '13px', color: '#dc2626' }}>{errors.submit}</p>
+            </div>
+          )}
+
+          {/* Team Name */}
+          <div>
+            <label
+              htmlFor="edit-team-name"
+              className="block font-medium"
+              style={{ fontSize: '14px', color: '#111827', marginBottom: '6px' }}
+            >
+              Team Name <span style={{ color: '#dc2626' }} aria-hidden="true">*</span>
+            </label>
+            <input
+              ref={nameRef}
+              id="edit-team-name"
+              type="text"
+              value={form.name}
+              aria-required="true"
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? 'edit-team-name-error' : undefined}
+              onChange={(e) => { setField('name', e.target.value); clearError('name') }}
+              className="w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2"
+              style={{
+                fontSize: '14px',
+                height: '36px',
+                borderColor: errors.name ? '#dc2626' : '#e5e7eb',
+                '--tw-ring-color': 'rgba(94, 106, 210, 0.2)',
+              }}
+            />
+            {errors.name && (
+              <p
+                id="edit-team-name-error"
+                role="alert"
+                style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}
+              >
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          {/* Description (optional) */}
+          <div>
+            <label
+              htmlFor="edit-team-description"
+              className="block font-medium"
+              style={{ fontSize: '14px', color: '#111827', marginBottom: '6px' }}
+            >
+              Description
+              <span className="ml-1 font-normal" style={{ color: '#9ca3af' }}>(optional)</span>
+            </label>
+            <textarea
+              id="edit-team-description"
+              rows={3}
+              value={form.description}
+              placeholder="What does this team work on?"
+              onChange={(e) => setField('description', e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 resize-none"
+              style={{
+                fontSize: '14px',
+                '--tw-ring-color': 'rgba(94, 106, 210, 0.2)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          className="flex items-center justify-end gap-3 px-6 py-4"
+          style={{ borderTop: '1px solid #e5e7eb' }}
+        >
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-md font-medium transition-colors hover:bg-gray-50"
+            style={{ fontSize: '14px', color: '#6b7280' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isPrimaryDisabled}
+            className="px-4 py-2 rounded-md font-medium transition-opacity"
+            style={{
+              fontSize: '14px',
+              color: 'white',
+              backgroundColor: isPrimaryDisabled ? '#9ca3af' : '#5e6ad2',
+              cursor: isPrimaryDisabled ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ─── ProjectRow ───────────────────────────────────────────────────────────────
 
@@ -144,6 +358,7 @@ export default function TeamDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showCreateProject, setShowCreateProject] = useState(false)
+  const [showEditTeam, setShowEditTeam] = useState(false)
 
 
   // ── Data fetching ────────────────────────────────────────────────────────────
@@ -278,8 +493,9 @@ export default function TeamDetailPage() {
             <h1 className="font-bold" style={{ fontSize: '24px', color: '#111827' }}>
               {team.name}
             </h1>
-            {/* Edit button — placeholder, no handler yet. Will be wired in a future session */}
+            {/* Edit button — opens EditTeamModal */}
             <button
+              onClick={() => setShowEditTeam(true)}
               aria-label="Edit team details"
               className="p-1 rounded transition-colors hover:bg-gray-100"
             >
@@ -390,6 +606,16 @@ export default function TeamDetailPage() {
         onClose={() => setShowCreateProject(false)}
         teamId={teamId}
         onProjectCreated={(newProject) => setProjects((prev) => [newProject, ...prev])}
+      />
+
+      {/* Edit Team modal */}
+      {/* WHY onTeamSaved updates team state directly: avoids a full refetch.
+          The header name and description update instantly on save. */}
+      <EditTeamModal
+        isOpen={showEditTeam}
+        onClose={() => setShowEditTeam(false)}
+        team={team}
+        onTeamSaved={(updatedTeam) => setTeam(updatedTeam)}
       />
     </div>
   )
