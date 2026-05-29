@@ -193,7 +193,6 @@ export default function NewTaskModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={handleClose}
-      aria-hidden="true"
     >
       {/* Modal container — stops click propagation so backdrop click doesn't fire inside */}
       <div

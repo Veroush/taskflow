@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Plus, Edit2, AlertCircle, Users, FolderKanban } from 'lucide-react'
 import api from '../services/api'
 import TopBar from '../components/TopBar'
+import CreateProjectModal from '../components/CreateProjectModal'
 
 // ─── Helper functions ─────────────────────────────────────────────────────────
 
@@ -23,15 +24,7 @@ const getStatusStyle = (status) => {
   return { backgroundColor: '#f9fafb', color: '#9ca3af' }
 }
 
-// ─── CreateProjectModal stub ──────────────────────────────────────────────────
-// WHY a stub: the full modal will be built when we reach the Project Board page.
-// The button is wired up and ready — replace this function at that point.
-
-function CreateProjectModal({ isOpen, onClose }) {
-  if (!isOpen) return null
-  // TODO: Build full CreateProjectModal in future session
-  return null
-}
+// CreateProjectModal is a real shared component — imported at the top of this file.
 
 // ─── ProjectRow ───────────────────────────────────────────────────────────────
 
@@ -391,10 +384,12 @@ export default function TeamDetailPage() {
         </div>
       </div>
 
-      {/* Create Project modal stub — will be built in a future session */}
+      {/* Create Project modal — teamId is pre-set so team selector is hidden */}
       <CreateProjectModal
         isOpen={showCreateProject}
         onClose={() => setShowCreateProject(false)}
+        teamId={teamId}
+        onProjectCreated={(newProject) => setProjects((prev) => [newProject, ...prev])}
       />
     </div>
   )
