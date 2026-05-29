@@ -310,19 +310,7 @@ export default function MyTasksPage() {
   // ── Task click handler ───────────────────────────────────────────────────────
   // Builds the shape that TaskDetailPanel expects from the raw task object.
   const handleTaskClick = (task) => {
-    setSelectedTask({
-      title: task.title,
-      description: task.description || 'No description provided.',
-      status: getStatusLabel(task.status),
-      priority: task.priority || 'medium',
-      // These show raw IDs for now — will show names once the API returns joined user data
-      assignee: task.assignee?.fullName ?? task.assigneeId ?? '—',
-      reporter: task.createdBy?.fullName ?? task.createdById ?? '—',
-      sprint: task.sprint?.name ?? task.sprintId ?? '—',
-      points: task.storyPoints ?? '—',
-      dueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—',
-      created: task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '—',
-    })
+  setSelectedTask(task)
   }
 
   // ── Loading state ────────────────────────────────────────────────────────────

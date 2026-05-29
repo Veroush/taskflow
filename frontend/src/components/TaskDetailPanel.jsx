@@ -121,6 +121,12 @@ export default function TaskDetailPanel({ isOpen, onClose, task }) {
   // ── Subtasks state ────────────────────────────────────────────────────────────
   const [subtasks, setSubtasks] = useState([])
 
+  // ── AI Breakdown state ────────────────────────────────────────────────────────
+  const [aiSuggestions,   setAiSuggestions]   = useState([])
+  const [aiLoading,       setAiLoading]       = useState(false)
+  const [aiError,         setAiError]         = useState(false)
+  const [selectedAi,      setSelectedAi]      = useState([]) // indices of checked suggestions
+
   // ── Announce to screen readers ────────────────────────────────────────────────
   const announce = useCallback((message) => {
     if (liveRegionRef.current) liveRegionRef.current.textContent = message
@@ -287,6 +293,23 @@ export default function TaskDetailPanel({ isOpen, onClose, task }) {
         prev.map((s) => (s.id === subtask.id ? { ...s, completed: subtask.completed } : s))
       )
       announce('Failed to update subtask')
+    }
+  }
+
+  // ── AI breakdown handler ──────────────────────────────────────────────────────
+  const handleAiBreakdown = async () => {
+    setAiLoading(true)
+    setAiError(false)
+    setAiSuggestions([])
+    setSelectedAi([])
+    try {
+      const res = await api.post(`/tasks/${task.id}/breakdown`)
+      setAiSuggestions(res.data.data)
+      setSelectedAi(res.data.data.map((_, i) => i)) // all checked by default
+    } catch {
+      setAiError(true)
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -694,14 +717,75 @@ export default function TaskDetailPanel({ isOpen, onClose, task }) {
                   )}
                 </div>
 
-                {/* Subtasks section */}
                 <div>
-                  <h3
-                    className="font-semibold mb-3"
-                    style={{ fontSize: '14px', color: '#111827' }}
-                  >
-                    Subtasks
-                  </h3>
+                  {/* Subtasks section */}
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold" style={{ fontSize: '14px', color: '#111827' }}>
+                      Subtasks
+                    </h3>
+                    <button
+                      onClick={handleAiBreakdown}
+                      disabled={aiLoading || showSkeleton}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: '#5e6ad2', color: 'white', fontSize: '12px' }}
+                      aria-label="Use AI to suggest subtasks"
+                    >
+                      {aiLoading
+                        ? <><Loader2 size={12} className="animate-spin" /> Thinking...</>
+                        : '✨ AI Breakdown'
+                      }
+                    </button>
+                  </div>
+
+                  {/* AI suggestions */}
+                  {aiSuggestions.length > 0 && (
+                    <div
+                      className="rounded-md p-3 mb-3"
+                      style={{ backgroundColor: '#eef2ff', border: '1px solid #c7d2fe' }}
+                    >
+                      <p className="mb-2 font-medium" style={{ fontSize: '12px', color: '#4338ca' }}>
+                        AI suggested subtasks — pick the ones you want:
+                      </p>
+                      <div className="space-y-2 mb-3">
+                        {aiSuggestions.map((suggestion, i) => (
+                          <label key={i} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedAi.includes(i)}
+                              onChange={() =>
+                                setSelectedAi((prev) =>
+                                  prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
+                                )
+                              }
+                              className="w-4 h-4"
+                            />
+                            <span style={{ fontSize: '13px', color: '#111827' }}>{suggestion}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          const chosen = aiSuggestions
+                            .filter((_, i) => selectedAi.includes(i))
+                            .map((title, i) => ({ id: `ai-${Date.now()}-${i}`, label: title, completed: false }))
+                          setSubtasks((prev) => [...prev, ...chosen])
+                          setAiSuggestions([])
+                          setSelectedAi([])
+                        }}
+                        disabled={selectedAi.length === 0}
+                        className="px-3 py-1 rounded-md font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                        style={{ backgroundColor: '#4338ca', color: 'white', fontSize: '12px' }}
+                      >
+                        Add {selectedAi.length} subtask{selectedAi.length !== 1 ? 's' : ''}
+                      </button>
+                    </div>
+                  )}
+
+                  {aiError && (
+                    <p className="mb-3" style={{ fontSize: '12px', color: '#ef4444' }}>
+                      Failed to get AI suggestions. Try again.
+                    </p>
+                  )}
 
                   {showSkeleton ? (
                     <div className="space-y-2 mb-3">
@@ -734,13 +818,11 @@ export default function TaskDetailPanel({ isOpen, onClose, task }) {
                     </div>
                   ) : null}
 
-                  {/* Add Subtask — stub, no backend endpoint yet */}
+                  {/* Add Subtask — stub */}
                   <button
                     aria-label="Add subtask"
                     style={{ fontSize: '13px', color: '#5e6ad2' }}
-                    onClick={() => {
-                      // TODO: implement when subtask creation endpoint is added
-                    }}
+                    onClick={() => {}}
                   >
                     + Add Subtask
                   </button>
