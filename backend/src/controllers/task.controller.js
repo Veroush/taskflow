@@ -6,6 +6,8 @@ const {
   deleteTaskService,
 } = require('../services/task.service');
 
+const { breakdownTask } = require('../services/ai.service');
+
 const { createTaskSchema, updateTaskSchema } = require('../validators/task.validator');
 
 const createTask = async (req, res, next) => {
@@ -55,4 +57,14 @@ const deleteTask = async (req, res, next) => {
   }
 };
 
-module.exports = { createTask, getTasks, getTask, updateTask, deleteTask };
+const breakdownTaskAI = async (req, res, next) => {
+  try {
+    const task = await getTaskById(req.params.taskId, req.user.id);
+    const subtasks = await breakdownTask(task.title, task.description);
+    res.status(200).json({ success: true, data: subtasks });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { createTask, getTasks, getTask, updateTask, deleteTask, breakdownTaskAI };

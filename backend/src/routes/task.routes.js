@@ -6,6 +6,7 @@ const {
   getTask,
   updateTask,
   deleteTask,
+  breakdownTaskAI,
 } = require('../controllers/task.controller');
 
 const projectRouter = express.Router({ mergeParams: true });
@@ -20,5 +21,6 @@ projectRouter.get('/', getTasks);
 taskRouter.get('/:id', getTask);
 taskRouter.patch('/:id', updateTask);
 taskRouter.delete('/:id', deleteTask);
+taskRouter.post('/:taskId/breakdown', breakdownTaskAI);
 
 module.exports = { projectRouter, taskRouter };
