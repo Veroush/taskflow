@@ -1,3 +1,7 @@
+const axios = require('axios');
+
+const N8N_TASK_WEBHOOK = 'http://localhost:5678/webhook-test/199f7da5-f966-425f-8301-3f33cbc1ab31';
+
 const {
   createTask,
   findTasksByProjectId,
@@ -16,7 +20,21 @@ const createTaskService = async (projectId, userId, data) => {
     throw error;
   }
 
-  return createTask({ ...data, projectId, createdById: userId });
+  const task = await createTask({ ...data, projectId, createdById: userId });
+
+  console.log('Task created:', JSON.stringify(task));
+  console.log('Due date:', task.dueDate);
+
+  if (task.dueDate) {
+    axios.post(N8N_TASK_WEBHOOK, {
+      taskId: task.id,
+      title: task.title,
+      dueDate: task.dueDate,
+      projectId: task.projectId,
+    }).catch((err) => console.log('Webhook error:', err.message));
+  }
+
+  return task;
 };
 
 const getTasksByProject = async (projectId, userId) => {
