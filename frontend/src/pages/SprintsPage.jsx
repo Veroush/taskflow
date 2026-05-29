@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Plus, AlertCircle, ChevronRight, ChevronDown } from 'lucide-react'
 import api from '../services/api'
 import TopBar from '../components/TopBar'
+import CreateSprintModal from '../components/CreateSprintModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -207,6 +208,7 @@ export default function SprintsPage() {
   // WHY a Set: O(1) lookup for has/add/delete vs array includes().
   // WHY start with active sprint expanded: most useful default view.
   const [expandedSprints, setExpandedSprints] = useState(new Set())
+  const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false)
 
   // ── Data fetching ─────────────────────────────────────────────────────────────
   // WHY three parallel calls: project info, sprints, and tasks are independent.
@@ -469,9 +471,9 @@ export default function SprintsPage() {
               ({sprints.length})
             </span>
           </h2>
-          {/* Create Sprint — stub, no handler yet */}
-          {/* TODO: wire to CreateSprintModal in future session */}
+          {/* Create Sprint button — opens CreateSprintModal */}
           <button
+            onClick={() => setIsCreateSprintOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-md font-medium transition-opacity hover:opacity-90"
             style={{ backgroundColor: '#5e6ad2', color: 'white', fontSize: '13px' }}
           >
@@ -494,6 +496,7 @@ export default function SprintsPage() {
                 Create your first sprint to start planning work
               </p>
               <button
+                onClick={() => setIsCreateSprintOpen(true)}
                 className="px-4 py-2 rounded-md font-medium transition-opacity hover:opacity-90"
                 style={{ backgroundColor: '#5e6ad2', color: 'white', fontSize: '14px' }}
               >
@@ -517,6 +520,19 @@ export default function SprintsPage() {
           </div>
         )}
       </div>
+
+      {/* ── CreateSprintModal ─────────────────────────────────────────────────── */}
+      {/* WHY nextSprintNumber={sprints.length + 1}: pre-fills the name field with
+          the next logical sprint number so the user doesn't have to type it.
+          WHY onSprintCreated appends to sprints state: avoids a full refetch and
+          makes the new sprint appear instantly without a loading flash. */}
+      <CreateSprintModal
+        isOpen={isCreateSprintOpen}
+        onClose={() => setIsCreateSprintOpen(false)}
+        projectId={projectId}
+        nextSprintNumber={sprints.length + 1}
+        onSprintCreated={(newSprint) => setSprints((prev) => [...prev, newSprint])}
+      />
     </div>
   )
 }
