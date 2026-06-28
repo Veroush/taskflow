@@ -17,7 +17,7 @@ app.use(helmet());
 
 // cors controls which domains can call your API
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 

@@ -10,7 +10,8 @@ const createProjectSchema = z.object({
     .string()
     .max(500, 'Description must be at most 500 characters')
     .trim()
-    .optional(),
+    .optional()
+    .nullable(),
   teamId: z
     .string({ required_error: 'Team ID is required' })
     .uuid('Team ID must be a valid UUID'),
@@ -32,7 +33,8 @@ const updateProjectSchema = z.object({
     .string()
     .max(500, 'Description must be at most 500 characters')
     .trim()
-    .optional(),
+    .optional()
+    .nullable(),
   status: z
     .enum(['active', 'archived', 'completed'], {
       errorMap: () => ({ message: 'Status must be active, archived, or completed' }),
