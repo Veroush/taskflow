@@ -1,6 +1,14 @@
 # TaskFlow
 
-A professional Scrum-based project management platform inspired by Jira, Linear, and Asana. Built as a full-stack portfolio project to demonstrate professional software engineering practices including OOP, UML/ERD modeling, Agile/Scrum methodology, automated testing, clean architecture, and AI-assisted development.
+A professional Scrum-based project management platform inspired by Jira, Linear, and Asana. Built as a full-stack portfolio project to demonstrate professional software engineering practices including object-oriented programming, UML/ERD modeling, Agile/Scrum methodology, clean architecture, automated testing, CI-ready workflows, and AI-assisted development.
+
+## 🚀 Live Demo
+
+**Frontend:** https://veroush.github.io/taskflow/
+
+**Backend API:** https://taskflow-126l.onrender.com
+
+> **Note:** The backend is hosted on Render's free tier. The first request after a period of inactivity may take up to a minute while the service wakes up.
 
 ---
 
@@ -20,10 +28,49 @@ A professional Scrum-based project management platform inspired by Jira, Linear,
 
 ---
 
+## Production Features
+
+- Responsive React frontend
+- RESTful Express API
+- JWT Authentication
+- Password hashing using bcrypt
+- PostgreSQL relational database
+- Prisma ORM with migrations
+- Environment-based configuration
+- CORS protection
+- Helmet security headers
+- Rate limiting
+- Input validation with Zod
+- Layered backend architecture
+- Automated integration testing
+- Production deployment
+
+---
+
+## Built With
+
+- React 19
+- Vite
+- Tailwind CSS v4
+- Node.js
+- Express.js
+- PostgreSQL
+- Prisma ORM
+- JWT
+- bcrypt
+- Zod
+- Jest
+- Supertest
+- Anthropic Claude API
+- GitHub Pages
+- Render
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+|-------|------------|
 | Frontend | React, Tailwind CSS v4, Vite |
 | Backend | Node.js, Express.js |
 | Database | PostgreSQL, Prisma ORM v6 |
@@ -34,7 +81,7 @@ A professional Scrum-based project management platform inspired by Jira, Linear,
 | Automation | n8n (self-hosted) |
 | Code Quality | ESLint, Prettier |
 | Version Control | Git, GitHub |
-| Deployment | Vercel (frontend), Railway (backend + database) |
+| Deployment | GitHub Pages (frontend), Render (backend + database) |
 
 ---
 
@@ -45,6 +92,25 @@ TaskFlow follows a clean layered architecture on the backend:
 ```
 Request → Route → Middleware → Controller → Service → Repository → Database
 ```
+
+### High-Level System Architecture
+
+```
+             GitHub Pages
+          (React + Vite Frontend)
+                   │
+             HTTPS REST API
+                   │
+             Express.js Backend
+                   │
+          Prisma ORM Repository
+                   │
+          PostgreSQL Database
+                   │
+    Anthropic API / n8n Integrations
+```
+
+The frontend is completely separated from the backend and communicates exclusively through REST endpoints. Business logic is isolated within the service layer while database access is abstracted through repositories using Prisma ORM.
 
 - **Routes** — Define endpoints and apply middleware
 - **Controllers** — Parse requests, call services, return responses
@@ -83,15 +149,17 @@ taskflow/
 ## API Endpoints
 
 ### Auth
+
 | Method | Endpoint | Description |
-|---|---|---|
+|--------|----------|-------------|
 | POST | /api/auth/register | Register new user |
 | POST | /api/auth/login | Login, returns JWT |
 | GET | /api/auth/me | Get current user |
 
 ### Teams
+
 | Method | Endpoint | Description |
-|---|---|---|
+|--------|----------|-------------|
 | POST | /api/teams | Create team |
 | GET | /api/teams | List my teams |
 | GET | /api/teams/:id | Get team details |
@@ -99,8 +167,9 @@ taskflow/
 | DELETE | /api/teams/:id | Delete team (owner only) |
 
 ### Projects
+
 | Method | Endpoint | Description |
-|---|---|---|
+|--------|----------|-------------|
 | POST | /api/projects | Create project |
 | GET | /api/projects?teamId= | List projects in team |
 | GET | /api/projects/:id | Get project |
@@ -108,8 +177,9 @@ taskflow/
 | DELETE | /api/projects/:id | Delete project (admin only) |
 
 ### Sprints
+
 | Method | Endpoint | Description |
-|---|---|---|
+|--------|----------|-------------|
 | POST | /api/projects/:projectId/sprints | Create sprint (admin only) |
 | GET | /api/projects/:projectId/sprints | List sprints |
 | GET | /api/sprints/:id | Get sprint |
@@ -117,8 +187,9 @@ taskflow/
 | DELETE | /api/sprints/:id | Delete sprint (admin only) |
 
 ### Tasks
+
 | Method | Endpoint | Description |
-|---|---|---|
+|--------|----------|-------------|
 | POST | /api/projects/:projectId/tasks | Create task |
 | GET | /api/projects/:projectId/tasks | List tasks |
 | GET | /api/tasks/:id | Get task |
@@ -142,15 +213,11 @@ taskflow/
 # Clone the repository
 git clone https://github.com/your-username/taskflow.git
 cd taskflow
-```
 
-```bash
 # Install backend dependencies
 cd backend
 npm install
-```
 
-```bash
 # Install frontend dependencies
 cd ../frontend
 npm install
@@ -168,6 +235,19 @@ DATABASE_URL_TEST=postgresql://user:password@localhost:5432/taskflow_test
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
 ANTHROPIC_API_KEY=your_anthropic_api_key
+```
+
+### Production Environment Variables
+
+The backend requires the following environment variables in production:
+
+```env
+NODE_ENV=production
+DATABASE_URL=
+JWT_SECRET=
+JWT_EXPIRES_IN=7d
+CLIENT_URL=https://veroush.github.io
+ANTHROPIC_API_KEY=
 ```
 
 ### Database Setup
@@ -201,6 +281,18 @@ npm test -- --runInBand --forceExit
 
 ---
 
+## Deployment
+
+| Service | Platform |
+|---------|----------|
+| Frontend | GitHub Pages |
+| Backend API | Render |
+| Database | Render PostgreSQL |
+
+The frontend is deployed as a static React application using GitHub Pages, while the Express backend and PostgreSQL database are hosted on Render. Authentication is handled using JWTs, and the frontend communicates with the backend through a REST API over HTTPS.
+
+---
+
 ## Scrum Process
 
 This project was built following Scrum methodology:
@@ -213,7 +305,7 @@ This project was built following Scrum methodology:
 ### Sample User Stories
 
 | As a... | I want to... | So that... |
-|---|---|---|
+|---------|-------------|------------|
 | Developer | Register an account | I can access the platform |
 | Team lead | Create a project under my team | I can organize work |
 | Developer | Create tasks in a sprint | I can track my work |
@@ -247,14 +339,41 @@ This project was built using AI tools as part of the development workflow:
 
 ---
 
-## Deployment
+## Future Improvements
 
-- **Frontend** — Vercel
-- **Backend** — Railway
-- **Database** — Railway (PostgreSQL)
+- Email verification
+- Password reset functionality
+- Real-time collaboration with WebSockets
+- Activity timeline
+- File attachments
+- Sprint burndown charts
+- Advanced search and filtering
+- Docker support
+- CI/CD with GitHub Actions
+- Kubernetes deployment
 
 ---
 
 ## Author
 
-Built by a junior developer as a portfolio project to demonstrate professional full-stack engineering skills including clean architecture, automated testing, Scrum methodology, and AI-assisted development.
+Developed by **Veroush** as a portfolio project to demonstrate professional full-stack software engineering practices.
+
+This project showcases:
+
+- React + Vite frontend development
+- Node.js & Express backend development
+- PostgreSQL database design
+- Prisma ORM
+- JWT authentication
+- Clean layered architecture
+- REST API design
+- Scrum-based project planning
+- Integration testing with Jest & Supertest
+- AI-powered features using Anthropic Claude
+- Production deployment on GitHub Pages and Render
+
+---
+
+## License
+
+This project is intended for educational and portfolio purposes.
