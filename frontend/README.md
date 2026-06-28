@@ -211,7 +211,7 @@ taskflow/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/taskflow.git
+git clone https://github.com/Veroush/taskflow.git
 cd taskflow
 
 # Install backend dependencies
@@ -290,6 +290,51 @@ npm test -- --runInBand --forceExit
 | Database | Render PostgreSQL |
 
 The frontend is deployed as a static React application using GitHub Pages, while the Express backend and PostgreSQL database are hosted on Render. Authentication is handled using JWTs, and the frontend communicates with the backend through a REST API over HTTPS.
+
+### Deploying the Frontend
+
+```bash
+cd frontend
+npm run build
+npx gh-pages -d dist
+```
+
+> **Important:** Only the Vite `dist` folder is deployed to GitHub Pages. Never deploy the repository root.
+
+### GitHub Pages SPA Routing
+
+React Router requires a `404.html` redirect trick to handle page refreshes correctly on GitHub Pages. A `404.html` file in `frontend/public/` catches unknown routes and redirects them back to the app with the original path preserved. The `BrowserRouter` is configured with `basename={import.meta.env.BASE_URL}` to correctly handle the `/taskflow/` base path set in `vite.config.js`.
+
+### Render Deployment
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | `backend` |
+| Build Command | `npm install && npx prisma generate && npx prisma migrate deploy` |
+| Start Command | `npm start` |
+
+Prisma migrations run automatically on every deploy.
+
+---
+
+## Known Production Fixes
+
+These issues were identified and resolved during production deployment:
+
+**1. Project creation failing with "Validation failed"**
+Zod rejected `null` description values sent by the frontend when the description field was left empty. Fixed by adding `.nullable()` to the `description` field in `project.validator.js`.
+
+**2. GitHub Pages 404 on page refresh**
+GitHub Pages serves static files and returns a 404 for any URL it doesn't recognise as a physical file. Fixed by adding a `frontend/public/404.html` that redirects unknown routes back to the app, and a redirect handler script in `index.html`.
+
+**3. Wrong URL after login**
+After logging in, React Router was navigating to `/app/dashboard` instead of `/taskflow/app/dashboard`, breaking the GitHub Pages base path. Fixed by passing `basename={import.meta.env.BASE_URL}` to `BrowserRouter` in `main.jsx`.
+
+**4. CORS blocking production requests**
+The backend originally only allowed `http://localhost:5173`. Fixed by configuring CORS to allow both `http://localhost:5173` and `https://veroush.github.io` via the `CLIENT_URL` environment variable.
+
+**5. JWT_EXPIRES_IN missing in production**
+Login failed on Render because `JWT_EXPIRES_IN` was not set as an environment variable. Fixed by adding it to the Render environment variables.
 
 ---
 
